@@ -1,0 +1,266 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f0f0f0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100vh;
+    -webkit-user-select: none; /* Disable text selection for Safari */
+    -moz-user-select: none; /* Disable text selection for Firefox */
+    -ms-user-select: none; /* Disable text selection for IE */
+    user-select: none; /* Disable text selection for other browsers */
+}
+
+.container {
+    flex-grow: 1;
+    overflow: auto;
+}
+
+.page {
+    display: none;
+    padding: 20px;
+    text-align: center;
+}
+
+.page.active {
+    display: block;
+}
+
+nav {
+    display: flex;
+    justify-content: space-around;
+    background-color: #333;
+    padding: 10px 0;
+}
+
+.nav-button {
+    width: 50px;
+    height: 50px;
+    background-color: #fff;
+    border: 2px solid #333;
+    border-radius: 50%;
+    color: #333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.nav-button.active {
+    background-color: #333;
+    color: #fff;
+}
+
+#hero-animation, #enemy-animation {
+    display: block;
+    margin: 0 auto;
+}
+
+#fight {
+    position: relative;
+    background-image: url('assets/animations/orc/bg.png');
+    background-size: cover;
+    background-position: right;
+    }
+
+#enemy-container {
+    position: relative;
+    z-index: 1; /* Ensure enemy animation is below smoke */
+}
+
+#fight-info {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+}
+
+#enemy-animation {
+    display: block;
+    background: none;
+    margin-top: 280px;
+    position: relative; /* Ensure canvas positioning context */
+    z-index: 1; /* Ensure enemy animation is below smoke */
+    width: 400px;
+    height: 500px;
+}
+
+#smoke-container {
+    position: absolute;
+    margin-top: 330px;
+    margin-left: 20px;
+    top: 0;
+    left: 0;
+    width: 10%; /* Adjust as needed */
+    height: 10%; /* Adjust as needed */
+    z-index: 2; /* Ensure smoke animations are above enemy animations */
+}
+
+button {
+    display: block;
+    margin: 10px auto;
+    padding: 10px 20px;
+    background-color: #333;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #555;
+}
+
+#fight-info {
+    margin-top: 20px;
+}
+
+/* Hero page canvas size */
+#hero-animation {
+    width: 320px;
+    height: 500px;
+}
+
+/* Disable zooming */
+body {
+    touch-action: manipulation;
+}
+
+/* Scrollable upgrades section */
+.scrollable {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-content: flex-start;
+    overflow-y: auto;
+    max-height: calc(100vh - 600px); /* Adjust as needed based on your layout */
+}
+
+#upgrades {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* Two columns */
+    gap: 10px; /* Adjust the gap between items as needed */
+}
+
+.upgrade-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 10px;
+    width: 45%; /* Two items per row */
+    border: 1px solid #ccc;
+    padding: 10px;
+    border-radius: 5px; /* Optional: Add rounded corners */
+    background-color: #8d8c8c; /* Optional: Add background color */
+}
+
+.upgrade-item img {
+    width: 100px;
+    height: 100px;
+    margin-bottom: 10px;
+}
+
+.upgrade-item span {
+    margin-bottom: 5px;
+}
+
+.upgrade-item .upgrade-details {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.upgrade-item .upgrade-details h3 {
+    margin: 0;
+}
+
+.upgrade-item .upgrade-details p {
+    margin: 5px 0;
+}
+
+#fight-gold-container {
+    position: absolute;
+    top: 100px; /* Adjust as needed */
+    left: 100px; /* Adjust as needed */
+    width: 100px;
+    height: auto;
+    display: flex;
+    align-items: center;
+}
+
+#fight-gold-container img {
+    width: 100px; /* Adjust image size as needed */
+    height: auto;
+    margin-right: 10px;
+    margin-left:80;
+}
+
+#fight-total-gold,
+#hero-total-gold {
+    font-family: 'Adventure', sans-serif;
+    font-size: 30px; /* Adjust font size as needed */
+    font-weight: normal;
+    color: #cbb021; /* Optional: Adjust color */
+    text-shadow: 
+        -1px -1px 0 #000,  
+        1px -1px 0 #000,
+        -1px 1px 0 #000,
+        1px 1px 0 #000; /* Creates the black stroke effect */
+}
+
+@font-face {
+    font-family: 'Adventure';
+    src: url('assets/fonts/DungeonQuests-BW6v5.ttf') format('truetype');
+    /* Adjust the URL and format according to your font file */
+}
+
+.gold-container {
+    display: flex;
+    align-items: center;
+}
+
+.gold-container img {
+    width: 100px; /* Adjust image size as needed */
+    height: auto;
+    margin-right: 10px;
+    margin-left:80px;
+}
+#hero {
+    position: relative;
+    background-image: url('assets/animations/orc/herobg.png');
+    background-size: cover; /* Ensures the image covers the entire area */
+    background-position: center; /* Centers the image */
+    background-repeat: no-repeat; /* Prevents the background from repeating */
+    width: 100%;
+    height: 100vh; /* Adjusts the height to cover the viewport height */
+}
+.damage-number {
+    position: absolute;
+    color: rgb(16, 238, 146);
+    font-family: 'Adventure', cursive; /* Use the custom font */
+    font-size: 40px;
+    animation: floatUp 1s ease-out forwards, fadeOut 1s ease-out forwards;
+    pointer-events: none; /* Ensure clicks pass through */
+    z-index: 10;
+}
+
+@keyframes floatUp {
+    0% {
+        transform: translateY(0);
+    }
+    100% {
+        transform: translateY(-50px);
+    }
+}
+
+@keyframes fadeOut {
+    0% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
+}
