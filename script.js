@@ -14,72 +14,40 @@ document.addEventListener('DOMContentLoaded', () => {
     let isTimerRunning = false;
     let intervalId;
     let attackDamage = 10; // Base attack damage
-    const telegramId = tg.initDataUnsafe.user.id;
-    const name = tg.initDataUnsafe.user.first_name;
+    const playerId = 'user123'; // This should be dynamically set based on the player (e.g., from Telegram initDataUnsafe)
 
-    async function fetchPlayerData(telegramId) {
-        try {
-            const response = await fetch(`/api/player/${telegramId}`);
-            if (!response.ok) {
-                throw new Error('Player not found, creating new player.');
-            }
-            const data = await response.json();
-            gold = data.gold;
-            level = data.level;
-            updateUI();
-        } catch (error) {
-            console.error('Error fetching player data:', error);
-            await createPlayer(telegramId, name);
-        }
+    function fetchPlayerData(userId) {
+        return getPlayerData(userId)
+            .then(data => {
+                gold = data.gold;
+                level = data.level;
+                updateUI();
+            })
+            .catch(error => console.error('Error fetching player data:', error));
     }
 
-    async function createPlayer(telegramId, name) {
-        try {
-            const response = await fetch('/api/player', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ telegramId, name }),
+    function savePlayerGold(newGoldAmount) {
+        return updatePlayerGold(playerId, newGoldAmount)
+            .then(data => {
+                gold = data.gold;
+                updateUI();
+            })
+            .catch(error => console.error('Error updating player gold:', error));
+    }
+
+    function fetchUpgradeData() {
+        return getUpgradesData()
+            .then(data => displayUpgrades(JSON.parse(data)))
+            .catch(error => {
+                console.error(error);
+                alert('Failed to fetch upgrade data. Please try again later.');
             });
-            const data = await response.json();
-            gold = data.gold;
-            level = data.level;
-            updateUI();
-        } catch (error) {
-            console.error('Error creating player:', error);
-        }
-    }
-
-    async function savePlayerData(telegramId, gold, level, upgrades, goldPerHour) {
-        try {
-            const response = await fetch(`/api/player/${telegramId}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ gold, level, upgrades, goldPerHour }),
-            });
-            const data = await response.json();
-            gold = data.gold;
-            level = data.level;
-            updateUI();
-        } catch (error) {
-            console.error('Error saving player data:', error);
-        }
-    }
-
-    async function fetchUpgradeData() {
-        try {
-            const response = await fetch('/api/upgrades');
-            const data = await response.json();
-            displayUpgrades(data);
-        } catch (error) {
-            console.error('Failed to fetch upgrade data:', error);
-            alert('Failed to fetch upgrade data. Please try again later.');
-        }
     }
     
     function initializeGame() {
         loadInitialAnimations();
         fetchUpgradeData();
-        fetchPlayerData(telegramId);
+        fetchPlayerData(playerId);
     }
 
     function displayUpgrades(data) {
@@ -104,7 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (gold >= currentCost) {
                 gold -= currentCost;
-                savePlayerData(telegramId, gold, level, [], 0); // You may need to update the params as needed
+                savePlayerGold(gold);
                 level++;
                 updateUI();
 
@@ -167,7 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const damage = 10;
         enemyHP -= getEffectiveDamage();
         gold += damage; // Increase gold by the damage dealt
-        savePlayerData(telegramId, gold, level, [], 0); // You may need to update the params as needed
+        savePlayerGold(gold);
         showDamageNumber(event.clientX, event.clientY, getEffectiveDamage() ); // Show damage number
         if (enemyHP <= 0) {
             levelUp();
@@ -219,29 +187,29 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateUI() {
-        enemyHPSpan.textContent = `HP: ${enemyHP}`;
-        timerSpan.textContent = `Time: ${timer}s`;
+        enemyHPSpan.textContent = 'HP: ${enemyHP}';
+    timerSpan.textContent = 'Time: ${timer}s';
 
-        const fightTotalGoldSpan = document.getElementById('fight-total-gold');
-        if (fightTotalGoldSpan) {
-            fightTotalGoldSpan.textContent = gold;
-        }
+    const fightTotalGoldSpan = document.getElementById('fight-total-gold');
+    if (fightTotalGoldSpan) {
+        fightTotalGoldSpan.textContent = gold;
+    }
 
-        const heroTotalGoldSpan = document.getElementById('hero-total-gold');
-        if (heroTotalGoldSpan) {
-            heroTotalGoldSpan.textContent = gold;
-        }
+    const heroTotalGoldSpan = document.getElementById('hero-total-gold');
+    if (heroTotalGoldSpan) {
+        heroTotalGoldSpan.textContent = gold;
+    }
 
-        const goldImages = document.querySelectorAll('.gold-image');
-        goldImages.forEach(img => {
-            img.src = 'assets/animations/orc/coinflip.png'; // Set the source of the gold image
-            img.alt = 'Gold'; // Optional: Set alt text for accessibility
-        });
+    const goldImages = document.querySelectorAll('.gold-image');
+    goldImages.forEach(img => {
+        img.src = 'assets/animations/orc/coinflip.png'; // Set the source of the gold image
+        img.alt = 'Gold'; // Optional: Set alt text for accessibility
+    });
     }
 
     function levelUp() {
         gold += 50;
-        savePlayerData(telegramId, gold, level, [], 0); // You may need to update the params as needed
+        savePlayerGold(gold);
         enemyHP = 100 + (level * 10);
         resetTimer();
         level++;
@@ -271,7 +239,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function loadAnimationSet(baseName) {
         return Promise.all([
-            fetch(`assets/animations/orc/${baseName}.json`)
+            fetch('assets/animations/orc/'+baseName+'.json')
                 .then(response => response.json())
                 .then(data => {
                     spriteData = data;
@@ -280,11 +248,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         spriteSheet = new Image();
                         spriteSheet.onload = resolve;
                         spriteSheet.onerror = reject;
-                        spriteSheet.src = `assets/animations/orc/${baseName}.png`;
+                        spriteSheet.src = 'assets/animations/orc/'+baseName+'.png';
                     });
                 }),
-            fetch(`assets/animations/orc/${baseName}_dmg.json`)
-                .then(response => response.json())
+            fetch('assets/animations/orc/'+baseName+'_dmg.json')
+                .then(response => response.json())  
                 .then(data => {
                     dmgSpriteData = data;
                     dmgFrames = Object.values(dmgSpriteData.frames).map(frame => frame.frame);
@@ -292,7 +260,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         dmgSpriteSheet = new Image();
                         dmgSpriteSheet.onload = resolve;
                         dmgSpriteSheet.onerror = reject;
-                        dmgSpriteSheet.src = `assets/animations/orc/${baseName}_dmg.png`;
+                        dmgSpriteSheet.src = 'assets/animations/orc/'+baseName+'_dmg.png';
                     });
                 }),
             fetch('assets/animations/orc/smoke.json')
@@ -358,8 +326,8 @@ document.addEventListener('DOMContentLoaded', () => {
         smokeCanvas.width = 256;
         smokeCanvas.height = 256;
         smokeCanvas.style.position = 'absolute';
-        smokeCanvas.style.left = `${x - smokeCanvas.width / 2}px`;
-        smokeCanvas.style.top = `${y - smokeCanvas.height / 2}px`;
+        smokeCanvas.style.left = '${x - smokeCanvas.width / 2}px';
+        smokeCanvas.style.top = '${y - smokeCanvas.height / 2}px';
         smokeCanvas.style.zIndex = '2';
         smokeContainer.appendChild(smokeCanvas);
 
