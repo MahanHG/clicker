@@ -1,73 +1,852 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta http-equiv='cache-control' content='no-cache'> 
-    <meta http-equiv='expires' content='0'> 
-    <meta http-equiv='pragma' content='no-cache'>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
-    <title>Clicker Game</title>
-    <link rel="stylesheet" href="styles.css">
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="data.js"></script>
-    <script src="script.js" defer></script>
-</head>
-<body>
-    <div class="container">
-        <section id="hero" class="page">
-            
-            <div class="gold-container">
-                <img src="assets/animations/orc/coinflip.png" alt="Gold">
-                <span id="hero-total-gold">0</span>
+<html><head>
+  <title>Telegram Fund Miner</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+   <style>
+      body, html {
+        margin: 0;
+        padding: 0;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        background-color: var(--tg-theme-bg-color, #ffffff);
+        color: var(--tg-theme-text-color, #000000);
+        overflow-x: hidden;
+        height: 100%;
+      }
+      #app {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        height: calc(100% - 40px);
+      }
+      .nav {
+        display: flex;
+        justify-content: space-around;
+        background-color: var(--tg-theme-secondary-bg-color, #f0f0f0);
+        padding: 10px;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 1000;
+      }
+      #upgradePopup, #popup, #detailedPopup {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: #fff;
+        padding: 30px;
+        border: 1px solid #ccc;
+        box-shadow: 0 0 10px rgba(0,0,0,0.2);
+        z-index: 2000;
+        display: none;
+        width: 90%;
+        max-width: 600px;
+        max-height: 80%;
+        overflow-y: auto;
+        border-radius: 10px;
+      }
+      .alert {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background-color: #4CAF50; /* Green background */
+    color: white;
+    text-align: center;
+    padding: 10px 0;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    transform: translateY(-100%);
+    transition: transform 0.3s ease-out;
+  }
+      #closeUpgradePopupButton, #closePopupButton, #closeDetailedPopupButton {
+        position: fixed;
+        top: 5px;
+        right: 5px;
+        cursor: pointer;
+        background: none;
+        border: none;
+        font-size: 24px;
+        color: #aaa;
+      }
+      .page {
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+      }
+      .hidden {
+        display: none !important;
+      }
+      button {
+        background-color: var(--tg-theme-button-color, #5288c1);
+        border: none;
+        color: var(--tg-theme-button-text-color, #ffffff);
+        padding: 15px 32px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 16px;
+        margin: 4px 2px;
+        cursor: pointer;
+        border-radius: 8px;
+      }
+      .energy-section, .task, .upgrade-section {
+        background-color: var(--tg-theme-secondary-bg-color, #f0f0f0);
+        border: 1px solid var(--tg-theme-hint-color, #999999);
+        padding: 15px;
+        margin-bottom: 15px;
+        border-radius: 8px;
+      }
+      #fundCoinCount, #tapPowerDisplay {
+        font-size: 30px;
+        font-weight: bold;
+        margin-bottom: 10px;
+        text-align: center;
+        color: var(--tg-theme-text-color, #000000);
+      }
+      #coinContainer {
+        width: 200px;
+        height: 200px;
+        position: relative;
+        margin: auto;
+        perspective: 1000px;
+      }
+      #farmingPage {
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+        background-image: url('output.jpg');
+        background-size: cover;
+        background-position: center;
+      }
+      #coin {
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        transform-style: preserve-3d;
+        transition: transform 0.1s;
+        cursor: pointer;
+        margin-top: 70;
+      }
+      .coin-face {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2em;
+        font-weight: bold;
+        background: linear-gradient(45deg, #5288c1, #7eaad7);
+        border: 5px solid #2678b6;
+        box-shadow: 0 0 20px rgba(0,0,0,0.2);
+        backface-visibility: hidden;
+        color: var(--tg-theme-button-text-color, #ffffff);
+  
+      }
+      .coin-back {
+        transform: rotateY(180deg);
+      }
+      .upgrade-details {
+        padding: 10px;
+        background-color: var(--tg-theme-secondary-bg-color, #f0f0f0);
+        border-top: 1px solid var(--tg-theme-hint-color, #999999);
+      }
+      #energyBarContainer {
+        width: 90%;
+        height: 20px;
+        background-color: #e0e0e0;
+        border-radius: 10px;
+        margin: 10px auto;
+        overflow: hidden;
+      }
+      #energyBar {
+        width: 100%;
+        height: 100%;
+        background-color: #4CAF50;
+        transition: width 0.3s ease-out;
+      }
+      #energyDisplay {
+        font-size: 14px;
+        text-align: center;
+        margin-top: 5px;
+        color: var(--tg-theme-text-color, #000000);
+      }
+      h2, h3 {
+        color: var(--tg-theme-text-color, #000000);
+      }
+      #upgradesList, #upgradePopupList {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+      }
+      .upgrade-section {
+        flex-basis: calc(50% - 10px);
+        margin-bottom: 20px;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+      }
+      .upgrade-section img {
+        width: 50px;
+        height: 50px;
+        margin-bottom: 10px;
+      }
+      .upgrade-section h3 {
+        margin: 10px 0;
+      }
+      .upgrade-section p {
+        font-size: 12px;
+        margin: 5px 0;
+      }
+      .upgrade-description {
+        font-size: 14px;
+        color: var(--tg-theme-hint-color, #999999);
+        margin-bottom: 10px;
+      }
+      #popupContent, #detailedPopupContent {
+        text-align: center;
+        position: relative;
+      }
+      #fundCoinImage {
+        width: 50px;
+        height: 50px;
+        margin-right: 10px;
+        margin-left: -300px;
+      }
+      #popupContent button, #detailedPopup button {
+        margin: 10px;
+        padding: 15px 32px;
+        font-size: 16px;
+        border: none;
+        cursor: pointer;
+        border-radius: 8px;
+        background-color: var(--tg-theme-button-color, #5288c1);
+        color: var(--tg-theme-button-text-color, #ffffff);
+      }
+      #openPopupButton {
+        background-color: var(--tg-theme-button-color, #5288c1);
+        border: none;
+        color: var(--tg-theme-button-text-color, #ffffff);
+        padding: 10px 20px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 14px;
+        margin: 20px auto 10px;
+        cursor: pointer;
+        border-radius: 8px;
+      }
+       #detailedPopup img {
+        width: 200px;
+        height: auto;
+      }
+      #detailedPopupContent {
+        position: relative;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background-color: white;
+        padding: 20px;
+        border-top-left-radius: 10px;
+        border-top-right-radius: 10px;
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+        transform: translateY(100%);
+        animation: slideIn 0.3s forwards;
+      }
+      @keyframes slideIn {
+        to {
+          transform: translateY(0);
+        }
+      }
+      #errorMessage {
+    position: fixed;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #ff6961;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    transition: top 0.5s ease-in-out;
+  }
+  .username-box {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      padding: 40px 50px;
+      background-color: #d2d4d6;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      box-shadow: 0 0 10px rgb(68 70 75 / 62%);
+      font-size: 16px;
+      margin-top: 50;
+  }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <div id="fundCoinCount">
+        <img id="fundCoinImage" src="coin.png" alt="Coin">
+        <span id="fundCoins">0</span>
+      </div>
+      <div id="errorMessage" class="hidden">Insufficient funds!</div>
+      
+      
+      <div id="farmingPage" class="page">
+        <div class="username-box">
+          Username: JohnDoe
+      </div>
+        <div id="coinContainer">
+          <div id="coin">
+            <div class="coin-face coin-front">$</div>
+            <div class="coin-face coin-back">$</div>
+          </div>
+        </div>
+  
+        <button id="openPopupButton">Open Pop-up</button>
+        <div id="popup">
+          <div id="popupContent">
+            <button id="closePopupButton" aria-label="Close">X</button>
+            <h3>Choose an Option</h3>
+            <button id="refillEnergyButton">Refill Energy</button>
+            <button id="goldMineButton">Gold Mine</button>
+          </div>
+        </div>
+        <div class="energy-section">
+          <div id="energyBarContainer">
+            <div id="energyBar"></div>
+          </div>
+          <div id="energyDisplay">Energy: <span id="energyValue">7000</span> / <span id="maxEnergyValue">7000</span></div>
+        </div>
+      </div>
+      
+      <div id="upgradesPage" class="page hidden">
+        <h2>Upgrades</h2>
+        <div id="upgradesList">
+          <div class="upgrade-section" id="militarySection" onclick="showUpgradeDetails('military')">
+            <img src="output.jpg" alt="Military upgrades icon: guns">
+            <h3>Military Upgrades</h3>
+            <p>Enhance your Military capabilities</p>
+          </div>
+          <div class="upgrade-section" id="researchSection" onclick="showUpgradeDetails('research')">
+            <img src="output.jpg" alt="Research upgrades icon: A lightning bolt">
+            <h3>Research Upgrades</h3>
+            <p>Boost your tech capacity and information</p>
+          </div>
+          <div class="upgrade-section" id="politicsSection" onclick="showUpgradeDetails('politics')">
+            <img src="output.jpg" alt="Politics upgrades icon: A robot arm">
+            <h3>Politics</h3>
+            <p>Maintain relations with the world</p>
+          </div>
+          <div class="upgrade-section" id="specialSection" onclick="showUpgradeDetails('special')">
+            <img src="output.jpg" alt="Special upgrades icon: A glowing star">
+            <h3>Special Upgrades</h3>
+            <p>Unlock unique and powerful abilities</p>
+          </div>
+          <div id="upgradePopup">
+            <div id="upgradePopupContent">
+              <button id="closeUpgradePopupButton" aria-label="Close">X</button>
+              <div id="upgradePopupList"></div>
             </div>
-            <canvas id="hero-animation" width="320" height="500"></canvas>
-            <div id="upgrades-container">
-                <div id="upgrades"></div>
+          </div>
+          <div id="detailedPopup">
+            <div id="detailedPopupContent">
+              <button id="closeDetailedPopupButton" aria-label="Close">X</button>
+              <img id="detailedPopupImage" src="output.jpg" alt="Upgrade Image" style="width:200px;height:200px">
+              <h4 id="detailedPopupName"></h4>
+              <p id="detailedPopupDescription"></p>
+              <p>Cost: <span id="detailedPopupCost"></span> Fund Coins</p>
+              <p>Bonus: <span id="detailedPopupBonus"></span></p>
+            <button id="buyUpgradeButton">Buy</button>
             </div>
-        </section>
-
-        <section id="fight" class="page">
-            
-            <div id="fight-gold-container">
-                <img src="assets/animations/orc/coinflip.png" alt="Gold">
-                <span id="fight-total-gold">0</span>
-            </div>
-            <div id="enemy-container">
-                <canvas id="enemy-animation" width="400" height="500"></canvas>
-            </div>
-            <div id="fight-info">
-                <span id="enemy-hp">HP: 100</span>
-                <span id="timer">Time: 30s</span>
-                <span id="gold">Gold: 0</span>
-            </div>
-        </section>
-
-        <section id="tasks" class="page">
-            <h1>Tasks</h1>
-            <div id="task-list">
-                <button id="daily-upgrade">Daily Upgrade</button>
-                <button id="social-media-task">Share on Social Media</button>
-            </div>
-        </section>
-
-        <section id="invites" class="page">
-            <h1>Invite Friends</h1>
-            <div id="invite-link">
-                <input type="text" id="invite-input" readonly>
-                <button id="copy-invite">Copy Invite Link</button>
-            </div>
-            <div id="invite-info">
-                <p>Invite your friends and get 10% of their income as a bonus!</p>
-            </div>
-        </section>
+      </div>
     </div>
-    <div id="smoke-container"></div>
+        </div>
+      
+      
+      <div id="tasksPage" class="page hidden">
+        <h2>Tasks</h2>
+        <div id="tasksList"></div>
+      </div>
+      
+      <div id="invitesPage" class="page hidden">
+        <h2>Invites</h2>
+        <p>Invite friends to earn bonus Fund Coins!</p>
+        <button id="inviteButton">Invite Friends</button>
+      </div>
+      
+      <nav class="nav">
+        <a href="#" data-page="farmingPage">Mine</a>
+        <a href="#" data-page="upgradesPage" onclick="switchPage('upgradesPage'); return false;">Upgrades</a>
+        <a href="#" data-page="tasksPage">Tasks</a>
+        <a href="#" data-page="invitesPage">Invites</a>
+      </nav>
+    </div>
+  
+  <script>
+  let fundCoins = 0;
+  let tapPower = 15;
+  let autoClickerPower = 0;
+  let energy = 7000;
+  let maxEnergy = 7000;
+  let energyRegenRate = 5; // Energy points regenerated per second
+  
+  const upgrades = [
+    { 
+      name: "Tap Power", 
+      cost: 100, 
+      power: 5, 
+      level: 1,
+      category: "military",
+      description: "Increases the number of Fund Coins you get per tap. Each level adds 5 to your tap power.",
+      image:"output.jpg"
+    },
+    { 
+      name: "Maximum Energy", 
+      cost: 200, 
+      power: 1000, 
+      level: 1,
+      category: "research",
+      description: "Increases your maximum energy capacity. Each level adds 1000 to your max energy.",
+      image:"output.jpg"
+    },
+    { 
+      name: "Energy Restore Rate", 
+      cost: 150, 
+      power: 1, 
+      level: 1,
+      category: "politics",
+      description: "Increases the rate at which your energy regenerates. Each level adds 1 energy per second to your restore rate.",
+      image:"output.jpg"
+    },
+    { 
+      name: "Auto Clicker", 
+      cost: 500, 
+      power: 1, 
+      level: 0,
+      category: "special",
+      description: "Automatically mines Fund Coins for you. Each level adds 1 to your auto-mining power.",
+      image:"output.jpg"
+    },{ 
+      name: "Military Training", 
+      cost: 500, 
+      power: 1, 
+      level: 0,
+      category: "military",
+      description: "Training your forces is a great way to be ready when the need arises.",
+      image:"output.jpg"
+    },
+    { 
+      name: "Military Training 2", 
+      cost: 500, 
+      power: 1, 
+      level: 0,
+      category: "military",
+      description: "Training your forces is a great way to be ready when the need arises.",
+      image:"output.jpg"
+    }
+  ];
+  
+  const tasks = [
+    { name: "Collect 1000 Fund Coins", reward: 500, goal: 1000, progress: 0 },
+    { name: "Buy 3 upgrades", reward: 1000, goal: 3, progress: 0 },
+    { name: "Invite 2 friends", reward: 2000, goal: 2, progress: 0 }
+  ];
+  function openPopup() {
+      const popup = document.getElementById('popup');
+      popup.style.display = 'block';
+  }
+  
+  function closePopup() {
+      const popup = document.getElementById('popup');
+      popup.style.display = 'none';
+  }
+  
+  // Event listener for opening the pop-up
+  document.getElementById('openPopupButton').addEventListener('click', openPopup);
+  
+  // Event listener for closing the pop-up (X button)
+  document.getElementById('closePopupButton').addEventListener('click', closePopup);
+  
+  // Event listener to close pop-up when clicking outside it
+  window.addEventListener('click', function(event) {
+      const popup = document.getElementById('popup');
+      if (event.target === popup) {
+          popup.style.display = 'none';
+      }
+  });
+  function updateFundCoins() {
+    document.getElementById('fundCoins').textContent = fundCoins;
+  }
+  
+  function updateTapPower() {
+    document.getElementById('tapPower').textContent = tapPower;
+  }
+  
+  function updateEnergyBar() {
+    const energyBar = document.getElementById('energyBar');
+    const percentage = (energy / maxEnergy) * 100;
+    energyBar.style.width = `${percentage}%`;
+    document.getElementById('energyValue').textContent = Math.round(energy);
+    document.getElementById('maxEnergyValue').textContent = maxEnergy;
+  }
+  
+  function mineFundCoins(event) {
+    if (energy >= tapPower) {
+      fundCoins += tapPower;
+      energy -= tapPower;
+      updateFundCoins();
+      updateEnergyBar();
+      checkTasks();
+      
+      const coin = document.getElementById('coin');
+      const rect = coin.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+      
+      const x = event.clientX - centerX;
+      const y = event.clientY - centerY;
+      
+      const recoilX = -y / 5;
+      const recoilY = x / 5;
+      
+      coin.style.transform = `rotateX(${recoilX}deg) rotateY(${recoilY}deg) scale(0.95)`;
+      
+      setTimeout(() => {
+        coin.style.transform = 'rotateX(0) rotateY(0) scale(1)';
+      }, 150);
+    }
+  }
+  
+  function buyUpgrade(upgrade) {
+    if (fundCoins >= upgrade.cost) {
+      fundCoins -= upgrade.cost;
+      upgrade.level++;
+      switch (upgrade.name) {
+        case "Tap Power":
+          tapPower += upgrade.power;
+          updateTapPower();
+          break;
+        case "Maximum Energy":
+          maxEnergy += upgrade.power;
+          break;
+        case "Energy Restore Rate":
+          energyRegenRate += upgrade.power;
+          break;
+        case "Auto Clicker":
+          autoClickerPower += upgrade.power;
+          break;
+      }
+      upgrade.cost = Math.round(upgrade.cost * 1.5);
+      updateFundCoins();
+      updateEnergyBar();
+      checkTasks();
+  
+      // Update upgrade popup immediately
+      //updateUpgradePopup(upgrade);
+  
+      // Show Congratulations alert
+      showCongratulationsAlert(upgrade.name, upgrade.level);
+    } else {
+      // Show Error message if not enough fundCoins
+      showError("Insufficient Fund Coins. Earn more to buy this upgrade.");
+    }
+  }
+  function showCongratulationsAlert(name, level) {
+    const alertMessage = document.createElement('div');
+    alertMessage.classList.add('alert');
+    alertMessage.style.backgroundColor = '#4CAF50'; // Green background
+    alertMessage.textContent = `Congratulations! ${name} level ${level} is now yours.`;
+  
+    document.body.appendChild(alertMessage);
+  
+    setTimeout(() => {
+      alertMessage.style.transform = 'translateY(0)';
+    }, 100);
+  
+    setTimeout(() => {
+      alertMessage.style.transform = 'translateY(-100%)';
+      setTimeout(() => {
+        alertMessage.remove();
+      }, 1000);
+    }, 3000);
+  }
+  function updateUpgradePopup(upgrade) {
+    console.log(upgrade);
+    const popup = document.getElementById('upgrade-detail');
+    popup.querySelector('upgrade.cost').textContent = upgrade.cost;
+    popup.querySelector('upgrade.bonus').textContent = upgrade.power;
+    popup.querySelector('.upgrade-next-level').textContent = `Level ${upgrade.level + 1}`;
+  
+  }
+  function showError(message) {
+    const errorMessage = document.createElement('div');
+    errorMessage.classList.add('alert');
+    errorMessage.style.backgroundColor = '#f44336'; // Red background
+    errorMessage.textContent = message;
+  
+    document.body.appendChild(errorMessage);
+  
+    setTimeout(() => {
+      errorMessage.style.transform = 'translateY(0)';
+    }, 100);
+  
+    setTimeout(() => {
+      errorMessage.style.transform = 'translateY(-100%)';
+      setTimeout(() => {
+        errorMessage.remove();
+      }, 1000);
+    }, 3000);
+  }
+  
+  function renderUpgrades() {
+    const upgradesList = document.getElementById('upgradesList');
+    upgradesList.innerHTML = '';
+    upgrades.forEach((upgrade, index) => {
+      const upgradeElement = document.createElement('div');
+      upgradeElement.className = 'upgrade';
+      upgradeElement.innerHTML = `
+        <h3>${upgrade.name} (Level ${upgrade.level})</h3>
+        <p class="upgrade-description">${upgrade.description}</p>
+        <p>Current bonus: +${upgrade.power * upgrade.level} ${upgrade.name === "Tap Power" ? "coins per tap" : 
+                              upgrade.name === "Maximum Energy" ? "max energy" :
+                              upgrade.name === "Energy Restore Rate" ? "energy/s" : "auto-mining power"}</p>
+        <p>Cost: ${upgrade.cost} Fund Coins</p>
+        <p>Next level bonus: +${upgrade.power}</p>
+        <button onclick="buyUpgrade(upgrades[${index}])">Buy</button>
+      `;
+      upgradesList.appendChild(upgradeElement);
+    });
+  }
+  
+  function checkTasks() {
+    tasks.forEach(task => {
+      if (task.name === "Collect 1000 Fund Coins") {
+        task.progress = Math.min(fundCoins, task.goal);
+      } else if (task.name === "Buy 3 upgrades") {
+        task.progress = upgrades.reduce((sum, upgrade) => sum + upgrade.level, 0);
+      }
+      // "Invite 2 friends" task would be updated separately
+    });
+    renderTasks();
+  }
+  
+  function renderTasks() {
+    const tasksList = document.getElementById('tasksList');
+    tasksList.innerHTML = '';
+    tasks.forEach(task => {
+      const taskElement = document.createElement('div');
+      taskElement.className = 'task';
+      taskElement.innerHTML = `
+        <h3>${task.name}</h3>
+        <p>Progress: ${task.progress}/${task.goal}</p>
+        <p>Reward: ${task.reward} Fund Coins</p>
+      `;
+      tasksList.appendChild(taskElement);
+    });
+  }
+  
+  function inviteFriends() {
+    // This would integrate with Telegram's invite system
+    alert("Invite sent! You'll receive bonus Fund Coins when your friend joins.");
+  }
+  
+  function switchPage(pageName) {
+    document.querySelectorAll('.page').forEach(page => {
+      page.classList.add('hidden');
+    });
+    document.getElementById(pageName).classList.remove('hidden');
+  }
+  
+  
+  
+  // Initialize Telegram WebApp and apply color scheme
+  window.Telegram.WebApp.ready();
+  const colorScheme = window.Telegram.WebApp.colorScheme;
+  document.body.classList.add(colorScheme);
+  
+  function toggleUpgradeDetails(category) {
+    const detailsElement = document.getElementById(`${category}Details`);
+    if (detailsElement.classList.contains('hidden')) {
+      detailsElement.classList.remove('hidden');
+      showUpgradeDetails(category);
+    } else {
+      detailsElement.classList.add('hidden');
+      detailsElement.innerHTML = '';
+    }
+  }
+  
+  
+    
+   function showDetailedUpgrade(name, image, description, cost, bonus) {
+    const detailedPopup = document.getElementById('detailedPopup');
+    detailedPopup.style.display = 'block';
+  
+    // Populate detailed upgrade information
+    const detailedImage = document.getElementById('detailedPopupImage');
+    detailedImage.src = image;
+    detailedImage.alt = `${name} Image`;
+  
+    document.getElementById('detailedPopupName').textContent = name;
+    document.getElementById('detailedPopupDescription').textContent = description;
+    document.getElementById('detailedPopupCost').textContent = cost;
+    document.getElementById('detailedPopupBonus').textContent = bonus;
+  
+    const buyButton = document.getElementById('buyUpgradeButton');
+    buyButton.onclick = function() {
+      const upgrade = upgrades.find(u => u.name === name);
+      if (fundCoins >= upgrade.cost) {
+        buyUpgrade(upgrade);
+        detailedPopup.style.display = 'none';
+      } else {
+        // Display error message
+        const errorMessage = document.getElementById('errorMessage');
+        errorMessage.classList.remove('hidden');
+        setTimeout(() => {
+          errorMessage.classList.add('hidden');
+        }, 3000); // Hide error message after 3 seconds
+      }
+    };
+  }
+  
+  
+  // Event listener for closing the detailed popup
+  document.getElementById('closeDetailedPopupButton').addEventListener('click', function() {
+    document.getElementById('detailedPopup').style.display = 'none';
+  });
+  
+  // Render upgrades in the popup
+  function showUpgradeDetails(category) {
+    const upgradesList = document.getElementById('upgradePopupList');
+    upgradesList.innerHTML = ''; // Clear the list first
+  
+    // Apply CSS grid to the upgrades list container
+    upgradesList.style.display = 'grid';
+    upgradesList.style.gridTemplateColumns = 'repeat(2, 1fr)';
+    upgradesList.style.gap = '10px'; // Adjust the gap between items as needed
+  
+    const categoryUpgrades = upgrades.filter(upgrade => upgrade.category === category);
+    categoryUpgrades.forEach(upgrade => {
+      const upgradeElement = document.createElement('div');
+      upgradeElement.className = 'upgrade-detail';
+      upgradeElement.innerHTML = `
+        <img src="${upgrade.image}" alt="${upgrade.name} Image" style="width: 100px; height: 100px;">
+        <h4>${upgrade.name} (Level ${upgrade.level})</h4>
+        <p>${upgrade.description}</p>
+        <p>Cost: ${upgrade.cost} Fund Coins</p>
+        <p>Bonus: +${upgrade.power * upgrade.level} ${upgrade.name === "Tap Power" ? "coins per tap" : 
+                                upgrade.name === "Maximum Energy" ? "max energy" :
+                                upgrade.name === "Energy Restore Rate" ? "energy/s" : "auto-mining power"}</p>
+        <button onclick="showDetailedUpgrade('${upgrade.name}', '${upgrade.image}', '${upgrade.description}', ${upgrade.cost}, ${upgrade.power * upgrade.level})">Details</button>
+      `;
+      upgradesList.appendChild(upgradeElement);
+    });
+  
+    const upgradePopup = document.getElementById('upgradePopup');
+    upgradePopup.style.display = 'block';
+  }
+  document.getElementById('closeUpgradePopupButton').addEventListener('click', function() {
+    document.getElementById('upgradePopup').style.display = 'none';
+  });
+  // Event listener to close the detailed popup when clicking outside it
+  window.addEventListener('click', function(event) {
+    const detailedPopup = document.getElementById('detailedPopup');
+    if (event.target === detailedPopup) {
+      detailedPopup.style.display = 'none';
+    }
+  });
+  async function saveUserData() {
+  const userData = {
+    name: 'userName', // Replace with dynamic user name
+    data: {
+      fundCoins,
+      tapPower,
+      autoClickerPower,
+      energy,
+      maxEnergy,
+      energyRegenRate,
+      upgrades,
+      tasks
+    }
+  };
 
-    <nav>
-        <button class="nav-button" data-target="hero">Hero</button>
-        <button class="nav-button" data-target="fight">Fight</button>
-        <button class="nav-button" data-target="tasks">Tasks</button>
-        <button class="nav-button" data-target="invites">Invites</button>
-    </nav>
-</body>
-</html>
+  const response = await fetch('http://localhost:3000/save', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(userData)
+  });
+
+  const result = await response.text();
+  console.log(result);
+}
+
+async function loadUserData() {
+  const userName = 'userName'; // Replace with dynamic user name
+
+  const response = await fetch(`http://localhost:3000/load/${userName}`);
+  const data = await response.json();
+
+  if (data) {
+    fundCoins = data.fundCoins;
+    tapPower = data.tapPower;
+    autoClickerPower = data.autoClickerPower;
+    energy = data.energy;
+    maxEnergy = data.maxEnergy;
+    energyRegenRate = data.energyRegenRate;
+    upgrades = data.upgrades;
+    tasks = data.tasks;
+  }
+
+  // Initialize the UI with loaded data
+  renderTasks();
+    updateEnergyBar();
+    updateTapPower();
+}
+  
+  // Initialize the application
+  document.addEventListener('DOMContentLoaded', () => {
+    loadUserData();
+    document.getElementById('coin').addEventListener('click', mineFundCoins);
+    document.getElementById('inviteButton').addEventListener('click', inviteFriends);
+  
+    document.querySelectorAll('.nav a').forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        switchPage(e.target.getAttribute('data-page'));
+      });
+    });
+  
+    
+  
+    // Auto miner functionality
+    setInterval(() => {
+      if (energy >= autoClickerPower) {
+        fundCoins += autoClickerPower;
+        energy -= autoClickerPower;
+        updateFundCoins();
+        updateEnergyBar();
+        checkTasks();
+      }
+    }, 1000);
+  
+    // Energy regeneration
+    setInterval(() => {
+      if (energy < maxEnergy) {
+        energy = Math.min(maxEnergy, energy + energyRegenRate);
+        updateEnergyBar();
+      }
+    }, 1000);
+  });
+  </script>
+  </body></html>
