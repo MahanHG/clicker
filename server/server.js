@@ -5,7 +5,11 @@ const { connectToDatabase, User } = require('./database');
 const bot = require('./telegramBot');
 
 const app = express();
-app.use(cors());
+const corsOptions = {
+    origin: 'https://mahanhg.github.io',
+    optionsSuccessStatus: 200
+  };
+app.use(cors(corsOptions));
 app.use(express.json());
 
 connectToDatabase();
